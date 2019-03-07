@@ -1,5 +1,5 @@
 use std::thread;
-use std::sync::mpsc::{Receiver, channel};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::io::prelude::*;
 use std::net::{TcpStream};
 
