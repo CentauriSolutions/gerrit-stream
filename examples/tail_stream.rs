@@ -1,6 +1,7 @@
 extern crate gerrit_stream;
+use failure;
 
-fn main() -> Result<(), String> {
+fn main() -> Result<(), failure::Error> {
     let filters: Vec<&str> = vec!["change-merged"];
     let channel = gerrit_stream::init("Chris.MacNaughton", "review.openstack.org", 29418, filters)?;
     for message in channel.iter() {

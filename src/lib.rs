@@ -6,6 +6,7 @@ use std::net::{TcpStream};
 #[macro_use]
 extern crate serde_derive;
 use std::io::BufReader;
+use failure;
 use ssh2::Session;
 
 mod gerrit_message;
@@ -16,7 +17,7 @@ pub fn with_channel<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(tx: Send
                                                                         name: T1,
                                                                         url: T2,
                                                                         port: u16,
-                                                                        filters: Vec<T3>) -> Result<(), String> {
+                                                                        filters: Vec<T3>) -> Result<(), failure::Error> {
     let name = name.into();
     let url = url.into();
     let filter_str: String = filters.iter().map(|f| f.as_ref()).collect::<Vec<&str>>().join(" -s ").into();
@@ -54,7 +55,7 @@ pub fn with_channel<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(tx: Send
     Ok(())
 }
 
-pub fn init<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(name: T1, url: T2, port: u16, filters: Vec<T3>) -> Result<Receiver<GerritMessage>, String> {
+pub fn init<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(name: T1, url: T2, port: u16, filters: Vec<T3>) -> Result<Receiver<GerritMessage>, failure::Error> {
     let (tx, rx) = channel();
     let _ = with_channel(tx, name, url, port, filters)?;
     Ok(rx)
