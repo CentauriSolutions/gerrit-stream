@@ -3,37 +3,23 @@ use std::sync::mpsc::{Receiver, channel};
 use std::io::prelude::*;
 use std::net::{TcpStream};
 
-use serde::{Deserialize, Serialize};
 #[macro_use]
 extern crate serde_derive;
 use std::io::BufReader;
 use ssh2::Session;
 
-// use serde_json::Result;
+mod gerrit_message;
 
-#[derive(Serialize, Deserialize)]
-struct Person {
-    name: String,
-    age: u8,
-    phones: Vec<String>,
-}
+pub use gerrit_message::GerritMessage;
 
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
-
-// pub struct GerritMessage;
-
-pub fn init<T1: Into<String>, T2: Into<String>>(name: T1, url: T2, port: u16) -> Result<Receiver<serde_json::Value>, String> {
-    let (tx, rx) = channel();
+pub fn with_channel<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(tx: Sender<GerritMessage>,
+                                                                        name: T1,
+                                                                        url: T2,
+                                                                        port: u16,
+                                                                        filters: Vec<T3>) -> Result<(), String> {
     let name = name.into();
     let url = url.into();
-    // let filter = filter.into();
+    let filter_str: String = filters.iter().map(|f| f.as_ref()).collect::<Vec<&str>>().join(" -s ").into();
 
     thread::spawn(move|| {
         let tcp = TcpStream::connect(format!("{}:{}", url, port)).expect("Can't create a TCP Socket");
@@ -43,22 +29,33 @@ pub fn init<T1: Into<String>, T2: Into<String>>(name: T1, url: T2, port: u16) ->
         // Try to authenticate with the first identity in the agent.
         sess.userauth_agent(name.as_ref()).expect("Can't authenticate");
         let mut channel = sess.channel_session().expect("Couldn't create SSH channel");
-
-        channel.exec("gerrit stream-events").expect("couldn't start stream");
+        let mut exec_str = "gerrit stream-events".into();
+        if filter_str != "" {
+             exec_str = format!("{} -s {}", exec_str, filter_str);
+        }
+        channel.exec(&exec_str).expect("couldn't start stream");
         let reader = BufReader::new(channel);
         for line in reader.lines() {
             if let Ok(line) = line {
-                if let Ok(value) = serde_json::from_str(&line) {
-                    match tx.send(value) {
-                        Err(e) => println!("{:?}", e),
-                        _ => {},
+                match serde_json::from_str(&line) {
+                    Ok(message) => {
+                        match tx.send(message) {
+                            Err(e) => println!("{:?}", e),
+                            _ => {},
+                        }
                     }
-                } else {
-                    println!("Failed to JSON parse Line: {}", line);
+                    Err(e) => {
+                        println!("\n\tFailed to parse JSON:{:?}\n{}", e, line);
+                    }
                 }
             }
         }
     });
+    Ok(())
+}
 
+pub fn init<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(name: T1, url: T2, port: u16, filters: Vec<T3>) -> Result<Receiver<GerritMessage>, String> {
+    let (tx, rx) = channel();
+    let _ = with_channel(tx, name, url, port, filters)?;
     Ok(rx)
 }
