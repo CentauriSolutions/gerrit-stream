@@ -10,9 +10,8 @@ mod tests {
             GerritMessage::CommentAdded(comment) => {
                 assert_eq!(comment.author.username, "test1");
             }
-            _ => unreachable!()
+            _ => unreachable!(),
         }
-
     }
 }
 
@@ -27,10 +26,9 @@ pub struct User {
 pub struct Approval {
     pub description: String,
     pub value: String,
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub approval_type: String,
 }
-
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -61,7 +59,7 @@ pub struct Patchset {
     pub kind: String,
     pub number: String,
     pub parents: Vec<String>,
-    #[serde(rename="ref")]
+    #[serde(rename = "ref")]
     pub commit_ref: String,
     pub revision: String,
     pub size_deletions: isize,
@@ -133,7 +131,7 @@ pub struct RefUpdated {
 #[serde(rename_all = "camelCase")]
 pub struct RefReplicated {
     pub project: String,
-    #[serde(rename="ref")]
+    #[serde(rename = "ref")]
     pub commit_ref: String,
     pub target_node: String,
     pub status: String,
@@ -145,7 +143,7 @@ pub struct RefReplicated {
 #[serde(rename_all = "camelCase")]
 pub struct RefReplicationDone {
     pub project: String,
-    #[serde(rename="ref")]
+    #[serde(rename = "ref")]
     pub commit_ref: String,
     pub nodes_count: usize,
     pub event_created_on: usize,
@@ -155,7 +153,7 @@ pub struct RefReplicationDone {
 #[serde(rename_all = "camelCase")]
 pub struct RefStatus {
     pub project: String,
-    #[serde(rename="ref")]
+    #[serde(rename = "ref")]
     pub commit_ref: String,
     pub target_node: String,
     pub status: String,
@@ -177,22 +175,22 @@ pub struct PatchsetCreated {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum GerritMessage {
-    #[serde(rename="change-merged")]
-    ChangeMerged(ChangeMerged),
-    #[serde(rename="change-abandoned")]
-    ChangeAbandoned(ChangeAbandoned),
-    #[serde(rename="comment-added")]
-    CommentAdded(CommentAdded),
+    #[serde(rename = "change-merged")]
+    ChangeMerged(Box<ChangeMerged>),
+    #[serde(rename = "change-abandoned")]
+    ChangeAbandoned(Box<ChangeAbandoned>),
+    #[serde(rename = "comment-added")]
+    CommentAdded(Box<CommentAdded>),
     // #[serde(rename="reviewer-added")]
     // ReviewerAdded(ReviewerAdded),
-    #[serde(rename="patchset-created")]
-    PatchsetCreated(PatchsetCreated),
-    #[serde(rename="ref-updated")]
-    RefUpdated(RefUpdated),
-    #[serde(rename="ref-replicated")]
-    RefReplicated(RefReplicated),
-    #[serde(rename="ref-replication-done")]
-    RefReplicationDone(RefReplicationDone),
-    #[serde(rename="ref-status")]
-    RefStatus(RefStatus),
+    #[serde(rename = "patchset-created")]
+    PatchsetCreated(Box<PatchsetCreated>),
+    #[serde(rename = "ref-updated")]
+    RefUpdated(Box<RefUpdated>),
+    #[serde(rename = "ref-replicated")]
+    RefReplicated(Box<RefReplicated>),
+    #[serde(rename = "ref-replication-done")]
+    RefReplicationDone(Box<RefReplicationDone>),
+    #[serde(rename = "ref-status")]
+    RefStatus(Box<RefStatus>),
 }

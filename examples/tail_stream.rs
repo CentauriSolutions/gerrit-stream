@@ -9,12 +9,12 @@ fn main() -> Result<(), failure::Error> {
             gerrit_stream::GerritMessage::ChangeMerged(change_merged) => {
                 println!("Change merged: {}", change_merged.change.url);
             }
-            other => println!("Something weird slipped through!\n{:?}", other)
+            other => println!("Something weird slipped through!\n{:?}", other),
         }
         // if message["type"] == "change-merged" {
         //     println!("\nLanded: {:?}\n", message);
         // } else {
-            // println!("\n{:?}\n", message);
+        // println!("\n{:?}\n", message);
         // }
     }
     Ok(())
