@@ -9,7 +9,7 @@ use failure;
 use ssh2::Session;
 use std::io::BufReader;
 
-mod gerrit_message;
+pub mod gerrit_message;
 
 pub use gerrit_message::GerritMessage;
 
