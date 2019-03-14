@@ -36,7 +36,7 @@ pub struct Change {
     pub branch: String,
     pub commit_message: String,
     pub id: String,
-    pub number: usize,
+    pub number: String,
     pub owner: User,
     pub project: String,
     pub status: String,
@@ -57,7 +57,7 @@ pub struct Patchset {
     pub created_on: usize,
     pub is_draft: bool,
     pub kind: String,
-    pub number: usize,
+    pub number: String,
     pub parents: Vec<String>,
     #[serde(rename = "ref")]
     pub commit_ref: String,
