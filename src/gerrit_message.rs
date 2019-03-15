@@ -1,3 +1,8 @@
+use std::fmt::Display;
+use std::str::FromStr;
+
+use serde::de::{self, Deserialize, Deserializer};
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -13,6 +18,15 @@ mod tests {
             _ => unreachable!(),
         }
     }
+}
+
+fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+    where T: FromStr,
+          T::Err: Display,
+          D: Deserializer<'de>
+{
+    let s = <&str>::deserialize(deserializer)?;
+    T::from_str(&s).map_err(de::Error::custom)
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -36,7 +50,8 @@ pub struct Change {
     pub branch: String,
     pub commit_message: String,
     pub id: String,
-    pub number: String,
+    #[serde(deserialize_with = "from_str")]
+    pub number: usize,
     pub owner: User,
     pub project: String,
     pub status: String,
@@ -57,7 +72,8 @@ pub struct Patchset {
     pub created_on: usize,
     pub is_draft: bool,
     pub kind: String,
-    pub number: String,
+    #[serde(deserialize_with = "from_str")]
+    pub number: usize,
     pub parents: Vec<String>,
     #[serde(rename = "ref")]
     pub commit_ref: String,
