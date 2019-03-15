@@ -13,15 +13,26 @@ pub mod gerrit_message;
 
 pub use gerrit_message::GerritMessage;
 
-pub fn with_channel<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(
+pub fn with_channel<T1, T2, T3, T4, Ref1>(
     tx: Sender<GerritMessage>,
     name: T1,
     url: T2,
     port: u16,
-    filters: Vec<T3>,
-) -> Result<(), failure::Error> {
+    ssh_key: T3,
+    password: Option<T4>,
+    filters: Vec<Ref1>,
+) -> Result<(), failure::Error>
+where
+    T1: Into<String>,
+    T2: Into<String>,
+    T3: Into<String>,
+    T4: Into<String>,
+    Ref1: AsRef<str>,
+{
     let name = name.into();
     let url = url.into();
+    let ssh_key = ssh_key.into();
+    let password = password.map(|a| a.into());
     let filter_str: String = filters
         .iter()
         .map(|f| f.as_ref())
@@ -34,10 +45,14 @@ pub fn with_channel<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(
         let mut sess = Session::new().expect("Can't  create a SSH session");
         sess.handshake(&tcp)
             .expect("Can't connect the SSH session to the TCP Socket");
-
-        // Try to authenticate with the first identity in the agent.
-        sess.userauth_agent(name.as_ref())
-            .expect("Can't authenticate");
+        match password {
+            Some(password) => sess
+                .userauth_pubkey_memory(name.as_ref(), None, ssh_key.as_ref(), Some(&password))
+                .expect("Can't authenticate"),
+            None => sess
+                .userauth_pubkey_memory(name.as_ref(), None, ssh_key.as_ref(), None)
+                .expect("Can't authenticate"),
+        }
         let mut channel = sess.channel_session().expect("Couldn't create SSH channel");
         let mut exec_str = "gerrit stream-events".into();
         if filter_str != "" {
@@ -63,13 +78,22 @@ pub fn with_channel<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(
     Ok(())
 }
 
-pub fn init<T1: Into<String>, T2: Into<String>, T3: AsRef<str>>(
+pub fn init<T1, T2, T3, T4, Ref1>(
     name: T1,
     url: T2,
     port: u16,
-    filters: Vec<T3>,
-) -> Result<Receiver<GerritMessage>, failure::Error> {
+    ssh_key: T3,
+    password: Option<T4>,
+    filters: Vec<Ref1>,
+) -> Result<(Receiver<GerritMessage>), failure::Error>
+where
+    T1: Into<String>,
+    T2: Into<String>,
+    T3: Into<String>,
+    T4: Into<String>,
+    Ref1: AsRef<str>,
+{
     let (tx, rx) = channel();
-    with_channel(tx, name, url, port, filters)?;
+    with_channel(tx, name, url, port, ssh_key, password, filters)?;
     Ok(rx)
 }
